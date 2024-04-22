@@ -2,8 +2,10 @@ from __future__ import annotations
 
 from ctypes import Union
 from enum import Enum
-from fastapi import FastAPI
+from fastapi import FastAPI, Query
 from pydantic import BaseModel
+from typing import Annotated
+
 class ModelName(str, Enum):
     alexnet = "alexnet"
     resnet = "resnet"
@@ -31,8 +33,11 @@ async def create_item(item: Item):
     return item
 
 @srv.get("/items/")
-async def read_item(skip: int = 0, limit: int = 10):
-    return fake_items_db[skip: skip + limit]
+async def read_item(q: Annotated[str | None, Query(max_length=50)] = None, skip: int = 0, limit: int = 10):
+    results = fake_items_db[skip: skip + limit]
+    if q:
+        results.append({"item_name": "q = " + q})
+    return results
 
 @srv.get("/models/{model_name}")
 async def get_model(model_name: ModelName):

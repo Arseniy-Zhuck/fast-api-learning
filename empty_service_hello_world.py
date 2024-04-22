@@ -3,14 +3,12 @@ from __future__ import annotations
 from ctypes import Union
 from enum import Enum
 from fastapi import FastAPI
-
-
+from pydantic import BaseModel
 class ModelName(str, Enum):
     alexnet = "alexnet"
     resnet = "resnet"
     lenet = "lenet"
 
-from pydantic import BaseModel
 
 
 class Item(BaseModel):
@@ -23,14 +21,18 @@ srv = FastAPI()
 
 fake_items_db = [{"item_name": "Foo"}, {"item_name": "Bar"}, {"item_name": "Baz"}, {"item_name": "ars"}]
 
+@srv.put("/items/{item_id}")
+async def update_item(item_id: int, item: Item):
+    return {"item_id": item_id, **item.dict()}
+
 @srv.post("/items/")
 async def create_item(item: Item):
+
     return item
 
 @srv.get("/items/")
 async def read_item(skip: int = 0, limit: int = 10):
     return fake_items_db[skip: skip + limit]
-
 
 @srv.get("/models/{model_name}")
 async def get_model(model_name: ModelName):
@@ -39,7 +41,6 @@ async def get_model(model_name: ModelName):
     if model_name.value == "lenet":
         return {"model_name": model_name, "message": "LeCNN all the images"}
     return {"model_name": model_name, "message": "Have some residuals"}
-
 
 @srv.get("/items/{item_id}")
 async def read_item(item_id: str, q: str | None = None, short: bool = False):
